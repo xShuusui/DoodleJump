@@ -42,53 +42,62 @@ void Doodler::render(Renderer* renderer) {
     
 }
 
-void Doodler::update(Window* window, Platform* platform) {
+//Positionen werden nicht direkt bearbeitet, ich berechne wie der Spieler sich im nächsten Frame bewegen wird
+//Am Ende wird diese Bewegung auf die wirkliche Position drauf addiert.
+void Doodler::update(Window* window, Platform* platform) {  
+    
+    //speedx = 0;
+    speedx *= 0.93; //Sliding
+    speedy -= gravity;
     
     //Movement
     if (window->isKeyPressed(GLFW_KEY_A))
-        posx = posx - moveSpeed;
+        speedx = -moveSpeed;
     else if (window->isKeyPressed(GLFW_KEY_D))
-        posx = posx + moveSpeed;
-    
-    //Jumping
-    if (window->isKeyPressed(GLFW_KEY_SPACE))
-        posy = posy + jumpPower;
-    
-    //Gravity
-    posy = posy - gravity;
-    
-    
+        speedx = moveSpeed;
+     
     //Collision Detection
-    bool space = isPlaceFree(0.1f, 0.01f, platform);
-    if (!space) {
-        posy = posy + gravity;
+    if (!isPlaceFree(posx + speedx, posy, 0.2f, 0.2f, platform))
+        speedx = 0;
+    
+    if (speedy < 0) {
+        if (!isPlaceFree(posx, posy + speedy, 0.2f, 0.2f, platform))
+            speedy = jumpPower;
     }
+    
+    posx += speedx;
+    posy += speedy;
+    
+    //Exit Game if Dead
+    if (posy < -1.0f)
+        exit(0);
     
     transMatrix = maths::createTransformationMatrix(posx, posy, 0, 0, 0, 0, 1.0f);
 }
 
-bool Doodler::isPlaceFree(float width, float heigth, Platform* platform) {
+//Checkt ob an der Stelle wo der Spieler als nächstes ist Platz ist.
+//AABB Box mit x,y,w,h schreiben placeFree(x,y,w,h, platform)
+//w,h = Player width/heigth
+//if(!placeFree(posx + speedx, posy, 0.1f, 0.1f)){ speedx = 0 } 
+//if(!placeFree(posx, posy + speedy, 0.1f, 0.1f)){ speedy = 0 }
+//AABB a - AABB: if(a.x < b.x +b.w && a.x +a.w > b.x && a.y < b.y +b.h && a.y +a.h > b.y)
+bool Doodler::isPlaceFree(float x, float y, float w, float h, Platform* platform) {
+    x -= w/2;
+    y -= h/2;
+    
     auto map = platform->getMPlatformCoords();
     
-    bool isfree = true;
     for (auto it = map.begin(); it != map.end(); it++) {
-        float pUnten = posy - 0.1f;
-        float platOben = it->second.second - heigth;
-        float platUnten = it->second.second + heigth;
+        float pw = 0.2f;
+        float ph = 0.02f;
+        float px = it->second.first - pw/2;
+        float py = it->second.second - ph/2;
         
-        float pLinks = posx - 0.1f;
-        float pRechts = posx + 0.1f;
-        float platLinks = it->second.first - width/2;
-        float platRechts = it->second.first + width/2;
-        
-        if (pUnten < platOben && pRechts > platLinks && pLinks < platRechts) {
-            isfree = false;
-            std::cout << pUnten << std::endl;
-            break;
+        if (x < px +pw && x + w > px && y < py +ph && y +h > py) {
+            return false;
         }
     }
-    
-    return isfree;
+    return true;
 }
 
 Doodler::~Doodler() {

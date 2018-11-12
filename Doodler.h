@@ -28,16 +28,22 @@ private:
     Texture* texDoodler = nullptr;
     Shader* shaDoodler = nullptr;
     
-    bool isPlaceFree(float width, float height, Platform* platform);
+    bool isPlaceFree(float x, float y, float w, float h, Platform* platform);
     
     glm::mat4 transMatrix;
     
-    const float gravity = 0.009f;
-    const float moveSpeed = 0.009f;
-    const float jumpPower = 0.03f;
+    const float gravity = 0.0001f;
+    const float moveSpeed = 0.005f;
+    const float jumpPower = 0.008f;
     
+    //Player Position
     float posx = 0;
-    float posy = 0;
+    float posy = 0.5;
+    
+    //Player Speed
+    float speedx = 0;
+    float speedy = 0;
+    
 
 };
 
